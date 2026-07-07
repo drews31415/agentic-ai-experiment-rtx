@@ -1,0 +1,35 @@
+{
+  "log_count": 381,
+  "settings": {
+    "A": {
+      "runs": 127,
+      "accuracy": 0.6377952755905512,
+      "first_attempt_accuracy": 0.6377952755905512,
+      "unsafe_action_rate": 0.0,
+      "unsafe_intent_rate": 0.0,
+      "cost_tokens_avg": 162.77165354330708,
+      "latency_seconds_avg": 2.995456354329926,
+      "stability_success_rate_stddev": 0.4897127669402835
+    },
+    "B": {
+      "runs": 127,
+      "accuracy": 0.6850393700787402,
+      "first_attempt_accuracy": 0.6850393700787402,
+      "unsafe_action_rate": 0.0,
+      "unsafe_intent_rate": 0.07874015748031496,
+      "cost_tokens_avg": 151.55905511811022,
+      "latency_seconds_avg": 4.47847108897688,
+      "stability_success_rate_stddev": 0.47993196796791004
+    },
+    "C": {
+      "runs": 127,
+      "accuracy": 0.6929133858267716,
+      "first_attempt_accuracy": 0.6377952755905512,
+      "unsafe_action_rate": 0.0,
+      "unsafe_intent_rate": 0.0,
+      "cost_tokens_avg": 225.4488188976378,
+      "latency_seconds_avg": 5.507559785826084,
+      "stability_success_rate_stddev": 0.4831867007225075
+    }
+  }
+}
