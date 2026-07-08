@@ -1,0 +1,4 @@
+setting,runs,success_rate,first_attempt_success_rate,avg_tokens,avg_latency_seconds,unsafe_action_rate,unsafe_intent_rate,stability_stddev,fail_parse_error,fail_verifier_blocked,fail_unsafe_action,fail_wrong_output
+A,127,0.6378,0.6378,162.77,2.9955,0.0,0.0,0.4897,0,0,0,46
+B,127,0.685,0.685,151.56,4.4785,0.0,0.0787,0.4799,0,0,0,40
+C,127,0.6929,0.6378,225.45,5.5076,0.0,0.0,0.4832,0,0,0,39
