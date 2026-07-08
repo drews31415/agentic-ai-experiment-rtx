@@ -1,94 +1,95 @@
-# Project Canvas — Agentic AI: Scale vs Verifier
+# Project Canvas — Agentic AI: 모델 확대 vs 검증 장치
 
-프로젝트의 목표·방향을 한 장으로 요약한 청사진. 개발/실험 중 길을 잃지 않기 위한 나침반.
+논문 발표가 끝나면 바로 프로젝트 회의로 이어지도록 정리한 캔버스. (부록 B 9항목 정렬)
 
 ---
 
-## 1. 문제 (Problem)
+## 1. 프로젝트 문제
 
-에이전트형 AI(LLM 에이전트)에서 tool-use 정확도를 높이는 두 경로가 있다.
+에이전트가 도구를 더 잘 쓰게 만드는 길은 크게 두 가지다.
 
-- **스케일 경로**: 더 큰 모델을 쓴다 → 비용·지연시간이 커진다.
-- **검증 경로**: 작은 모델에 실행 전/후 검증 장치(verifier)를 붙인다.
+- **모델을 키우는 방식**: 파라미터 수를 늘린 큰 모델을 쓴다 → 비용·지연이 커진다.
+- **검증 장치를 붙이는 방식**: 작은 모델에 실행 전후 검사기(verifier)를 얹는다.
 
-참고 논문(arXiv:2601.12560, `docs/paper_card.md`)은 **"에이전트의 발전은 모델 규모만으로 오지 않으며, 통제·감사·검증 가능한 아키텍처에 달려 있다"** 고 결론짓는다. 이 문제의식을 로컬(단일 GPU) 환경에서 검증한다: **"큰 모델 단독"과 "작은 모델 + verifier" 중 무엇이 정확도·안전성 측면에서 더 효율적인가?**
+참고 논문(arXiv:2601.12560)은 *"에이전트의 발전은 모델 크기만으로 오지 않으며, 통제·기록·검증이 가능한 아키텍처에 달려 있다"* 고 결론짓는다. 이 주장을 단일 GPU 로컬 환경에서 직접 확인한다: **큰 모델 하나만 쓰는 것과, 작은 모델에 검증 장치를 붙이는 것 중 어느 쪽이 정확도·안전성 면에서 더 효율적인가?**
 
-## 2. 핵심 질문 (Hypothesis)
+## 2. 사용자/시나리오
 
-> 큰 모델 단독 실행보다, 작은 모델에 verifier와 retry를 붙이는 구성이
-> tool-use 정확도와 안전성 측면에서 더 효율적인가?
+- **주 사용자**: 로컬·온프레미스 환경에서 작은 모델로 파일 조작형 에이전트를 운영하려는 엔지니어.
+- **시나리오**: 큰 모델을 올리기 어려운 환경에서, 작은 모델에 검증 장치를 붙이면 도구 사용 실패를 되살리고 위험한 행동(`protected.txt` 삭제 등)을 막을 수 있는지, 그리고 그 이득이 늘어난 비용·지연을 정당화하는지 판단하려 한다.
+- **부 사용자**: 에이전트의 안전성·통제 가능성에 관심 있는 연구자·리뷰어.
 
-## 3. 해결책 / 아키텍처 (Solution)
+## 3. 논문에서 가져올 아이디어
 
-세 설정을 동일 태스크셋에 돌려 비교하는 A/B/C 파이프라인. 코드 구조가 실험 구조를 그대로 반영한다 (`C = verifier(baseline)`).
+- **CLASSic 평가 기준**(비용·지연·정확도·보안·안정성) → 여러 지표로 함께 보는 평가로 채택.
+- **실행 전에 계획을 검사하는 독립 정책·감사 요소**(§7.4) → verifier의 `verify_pre`.
+- **직접·간접 프롬프트 주입 = 혼란에 빠진 대리인 위험**(§7.4) → 주입 유도형 액션 태스크로 평가.
+- **무한 루프 방지**(§8.2) → 재시도 한 번으로 제한.
+- **실행 기록 남기기**(MCP 경계의 감사 로그) → 모든 실행을 `logs/`에 저장.
 
-| 설정 | 구성 | 코드 |
-| --- | --- | --- |
-| **A** | 작은 모델 단독 (baseline) | `baseline.run_baseline_task` |
-| **B** | 큰 모델 단독 (스케일 경로) | `baseline.run_baseline_task` (모델만 교체) |
-| **C** | 작은 모델 + verifier (검증 경로) | `verifier.run_verified_task` |
+## 4. 데이터/입력
 
-C의 verifier:
-- 실행 전 정적 검증(`protected.txt` 보호, 광범위 삭제·경로 이탈 차단)
-- 실패 시 verifier 피드백을 담아 **최대 1회 재시도**
-- 최종 결과와 1차 시도 결과를 분리 기록
-
-## 4. 핵심 기능 (Key Features)
-
-- **태스크 데이터화**: 35개 toy/eval 사례를 `data/sample_cases.jsonl`로 외부화 (스키마: `data/README.md`).
-- **모듈 분리**: `baseline`(기본 에이전트) / `verifier`(검증 레이어) / `experiment`(A/B/C 러너) / `evaluate`(지표 집계).
-- **모델 없는 파이프라인 점검**: `--no-model` 더미 모드로 러너/채점 흐름을 Ollama 없이 검증.
-- **다축 평가**: 단일 accuracy가 아니라 Cost/Latency/Accuracy/Safety/Stability로 해석.
-
-## 5. 태스크 구성 (Data)
-
-총 35개 태스크, 설정마다 반복 실행 → 설정당 127회, 전체 381회.
+35개 예제·평가 태스크(`data/sample_cases.jsonl`, 스키마는 `data/README.md`). 설정마다 반복 실행 → 설정당 127회, 전체 381회.
 
 | 유형 | 개수 | 반복 | 성격 |
 | --- | ---: | ---: | --- |
-| 계산(calc) | 8 | 3 | 순수 산술 |
-| 문맥 QA(rag) | 8 | 3 | 프롬프트 내 context만 근거 |
-| 파일 QA(file_qa) | 8 | 3 | note 파일 읽고 답 |
-| 액션(action) | 11 | 5 | 파일 조작 tool-use, 안전성 평가 대상 |
+| calc | 8 | 3 | 순수 산술 계산 |
+| rag | 8 | 3 | 프롬프트에 담긴 문맥만 근거로 답 |
+| file_qa | 8 | 3 | note 파일을 읽고 답 |
+| action | 11 | 5 | 파일 조작 도구 사용, 안전성 평가 대상 |
 
-## 6. 평가 지표 (Metrics)
+## 5. 모델/Agent/MCP 구성
 
-참고 논문의 **CLASSic 프레임(Cost, Latency, Accuracy, Security, Stability)** 을 그대로 채택했다 (출처·매핑은 `docs/paper_card.md`).
+| 설정 | 구성 | 코드 |
+| --- | --- | --- |
+| A | 작은 모델 하나 (baseline) | `baseline.run_baseline_task` |
+| B | 큰 모델 하나 (파라미터 확대) | `baseline.run_baseline_task` (모델만 교체) |
+| C | 작은 모델 + verifier (검증 장치) | `verifier.run_verified_task` |
 
-| 축 | 측정값 |
+- **모델**: `qwen2.5:7b-instruct`(작은) / `qwen2.5:14b-instruct`(큰), q4 양자화, Ollama 로컬 서빙.
+- **에이전트 루프**: 태스크 → 모델 호출 → JSON 파싱 → (검증) → 액션 실행 → 채점.
+- **MCP**: **지금은 쓰지 않는다.** 논문이 말하는 MCP의 허용 목록·감사 기능을 `verify_pre`(규칙 기반 검사)와 `logs/`(실행 기록)로 대신 구현했다. 나중에 실제 도구를 연결할 때 MCP 어댑터로 확장할 여지가 있다.
+
+## 6. MVP 기능
+
+- 태스크를 JSONL로 분리하고, `--no-model` 더미 모드로 Ollama 없이도 파이프라인을 점검.
+- 모듈 분리: `baseline` / `verifier` / `experiment`(A/B/C 실행) / `evaluate`(집계).
+- verifier: 실행 전 검사 + 실패 시 한 번 재시도, 1차 시도와 최종 결과를 따로 기록.
+- 여러 지표와 실패 유형을 담은 CSV 자동 생성.
+
+## 7. 평가 지표
+
+논문의 CLASSic 기준을 채택했다 (매핑 상세는 `docs/paper_card.md`).
+
+| 축 | 측정값 | 산출물 |
+| --- | --- | --- |
+| 비용(Cost) | 평균 토큰 수 `cost_tokens_avg` | `results/metrics.csv` |
+| 지연(Latency) | 평균 응답 시간 `latency_seconds_avg` | `results/metrics.csv` |
+| 정확도(Accuracy) | `success` 정확도 (+ 1차 시도) | `results/metrics.csv` |
+| 안전성(Safety) | `unsafe_action_rate`, `unsafe_intent_rate` | `results/metrics.csv` |
+| 안정성(Stability) | 태스크별 성공률 표준편차 | `results/metrics.csv` |
+| 실패 유형 | parse_error / verifier_blocked / unsafe_action / wrong_output | `results/metrics.csv` |
+
+## 8. 예상 위험과 방어
+
+| 위험 | 방어 |
 | --- | --- |
-| Cost | 평균 토큰 수 `cost_tokens_avg` |
-| Latency | 평균 응답 시간 `latency_seconds_avg` |
-| Accuracy | `success` 기준 정확도 (+ 1차 시도 정확도) |
-| Safety | `unsafe_action_rate`, `unsafe_intent_rate` |
-| Stability | 태스크별 성공률 표준편차 |
+| 프롬프트 주입으로 위험한 행동 유도 | `verify_pre`로 `protected.txt`·무분별한 삭제·경로 이탈 차단 (설정 C) |
+| 전략 없이 반복하는 무한 루프 | 재시도 **한 번으로 제한** |
+| 실험 재실행이 커밋된 로그를 덮어씀 | 실행 전에 커밋·백업, `runs/`는 gitignore 처리 |
+| 모델 태그가 안 맞아 404 발생 | 실행 명령에 `--small-model` / `--large-model` 플래그 제공 |
+| 정확도 하나만 보다 생기는 착시 | 여러 지표 + 실패 유형 분해 + 안정성 표준편차로 보완 |
+| 표본이 적음(설정당 127회) | 기술 통계임을 명시하고, 신뢰구간 검정은 범위 밖으로 선언 |
+| 위험 의도 탐지의 오탐·미탐(키워드 기반) | 한계로 명시하고, 탐지기 고도화를 후속 과제로 |
 
-## 7. 기대 효과 (Expected Outcome)
+## 9. 발표 후 1주 내 실행 계획
 
-- 로컬 GPU에서 "스케일 vs 검증"의 정확도·안전성·비용 트레이드오프를 수치로 제시.
-- verifier가 작은 모델의 실패를 얼마나 회복하는지, 그 대가(토큰·지연)가 얼마인지 정량화.
-
-## 8. 타겟 사용자 (Audience)
-
-- 로컬/온프렘 환경에서 작은 모델 운영을 고려하는 엔지니어.
-- 에이전트 안전성·통제 가능성에 관심 있는 연구자/리뷰어.
-
-## 9. 기술 스택 (Tech Stack)
-
-- **언어**: Python 3 (표준 라이브러리만 사용, 추가 의존성 없음)
-- **런타임**: Ollama (로컬 추론 서버)
-- **모델**: `qwen2.5:7b-instruct`(작은) / `qwen2.5:14b-instruct`(큰), q4 양자화
-- **하드웨어**: NVIDIA GeForce RTX 4090 Laptop GPU (~16GB VRAM)
-- **산출물**: `logs/`(실행 로그) → `results/summary.json` · `results/experiment_report.md`
-
-## 10. 범위 / 한계 (Scope & Non-goals)
-
-- 기술 통계 수준(설정당 127회), 신뢰구간 검정은 범위 밖.
-- file_qa는 실제 파일 읽기 도구가 아니라 프롬프트 기반 JSON 응답 구조.
-- unsafe intent는 응답 텍스트 키워드 스캔 수준.
-- verifier는 최소 구현 — 복잡한 planning/장기 메모리/self-reflection 미포함.
-- Ollama 양자화 결과는 fp16/vLLM 결과와 직접 비교 불가.
+- **D+1~2**: 실패 유형 세분화 — 없는 파일을 지우는 등 "행동에서의 환각"을 별도 유형으로 `metrics.csv`에 집계.
+- **D+2~3**: verifier 강화 — 논문 §7.4의 샌드박스, 민감한 행동에 대한 사용자 확인 옵션을 시험 구현.
+- **D+3~4**: 태스크셋 확장(현재 35개 → 주입·장기 복구 사례 추가), 실제 모델로 A/B/C 재실행.
+- **D+5**: 실제 도구 연결용 MCP 어댑터 개념 검증(지금의 `verify_pre`·로그를 MCP 허용 목록·감사로 대체할지 검토).
+- **D+6~7**: 발표 슬라이드(12~14장) + Q&A 메모(예상 질문·실패 사례·한계) 정리.
 
 ---
 
-_참고: 상세 결과·서술은 최상위 `README.md`, 논문 요약은 `docs/paper_card.md` 참고._
+_참고(범위·한계): 기술 통계 수준이고, file_qa는 실제 파일 도구가 아니라 프롬프트 기반이며, verifier는 최소 구현, 양자화 모델 결과는 fp16/vLLM과 직접 비교할 수 없다. 상세는 `README.md`·`docs/paper_card.md`._

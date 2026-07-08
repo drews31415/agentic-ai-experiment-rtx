@@ -1,72 +1,81 @@
 # Paper Card
 
-이 프로젝트가 참고한 문헌의 핵심을 요약한 카드. "만들기 위해 참고한 자료"를 정리해 둔 요약장.
+발표 도입부의 이야기와 마지막 프로젝트 연결 슬라이드가 여기서 나온다. (부록 A 템플릿 정렬)
 
 ---
 
-## 서지 정보 (Bibliography)
+## 논문 정보
 
 | 항목 | 값 |
 | --- | --- |
 | 제목 | *Agentic Artificial Intelligence (AI): Architectures, Taxonomies, and Evaluation of Large Language Model Agents* |
 | 저자 | Arunkumar V (Anna University, Tiruchirappalli) · Gangadharan G.R. (NIT Tiruchirappalli) · Rajkumar Buyya (University of Melbourne) |
-| 식별자 | arXiv:2601.12560v1 [cs.AI] |
-| 발표일 | 2026-01-18 |
-| 유형 | 서베이 / 아키텍처·엔지니어링 중심 정리 |
+| 연도 | 2026 (2026-01-18) |
+| venue/arXiv | arXiv:2601.12560v1 [cs.AI] — https://arxiv.org/abs/2601.12560 |
+| 공식 코드·모델·데이터 | 확인 필요 — 서베이 논문이라 공식 코드 저장소는 원문에서 다시 확인 (TODO) |
 
-## 한 줄 요약 (TL;DR)
+## 한 줄 요약
 
-AI는 "텍스트를 생성하는 모델"에서 "인지·추론·계획·행동을 수행하는 **에이전트형 AI(Agentic AI)**"로 이동 중이다. 이 논문은 LLM 에이전트를 **6개 모듈 차원**으로 분해하는 통합 분류 체계를 제시하고, 성능뿐 아니라 **통제 가능성·안전성·감사 가능성**이 실제 배포의 핵심임을 강조한다. 핵심 메시지: **"발전은 모델 규모만으로 오지 않는다. 통제·감사·정렬 가능한 아키텍처에 달려 있다."**
+이 논문은 **LLM 에이전트 설계가 폭발적으로 늘면서 전체 그림을 파악하고 안전성·통제를 평가하기 어려워진 문제**를 풀기 위해, **에이전트를 6개 축으로 나누는 분류 체계 + 수학적 제어 루프(POMDP) 정의 + CLASSic 평가 기준**을 제안한다.
 
-## 핵심 기여 (Key Contributions)
+**기존 방법의 한계**
 
-1. **통합 아키텍처 중심 분류 체계** — LLM 에이전트를 6개 차원으로 분해:
-   Core Components(perception, memory, action, profiling) · Cognitive Architecture(planning, reflection) · Learning · Multi-Agent Systems · Environments · **Evaluation**.
-2. **엔지니어링·시스템 관점** — 메모리 백엔드/보존 정책, code-as-action, **MCP(Model Context Protocol)** 표준 커넥터, 명시적 상태 전환을 강제하는 오케스트레이션 컨트롤러 등 "배포에서 실제로 중요한" 설계 선택을 조명.
-3. **자율 루프 → 통제 가능한 그래프** — 다중 에이전트 상호작용(chain/star/mesh/workflow graph)과 프레임워크(CAMEL, AutoGen, MetaGPT, LangGraph, Swarm, MAKER)를 동일 관점으로 분석.
-4. **환경·평가·안전의 전체론적 관점** — 평가를 **CLASSic** 차원(Cost, Latency, Accuracy, Security, Stability)으로 통합하고, hallucination-in-action·무한 루프·prompt injection 같은 구체적 실패 모드와 연결.
+- 모델 하나를 호출하는 것만으로는 컨텍스트 창·신뢰성·도구 권한의 제약 때문에 복잡한 워크플로를 끝까지 해내기 어렵다.
+- 기존 에이전트 서베이는 응용 사례나 방법론(도구 사용·계획·학습) 정리에 치우쳐, "실제 시스템을 어떻게 만들고 배포하고 평가하는가"라는 아키텍처·엔지니어링 관점이 빠져 있었다.
+- 정확도 하나만 보는 평가로는, 에이전트가 도구를 실행하며 생기는 통제·안전·기록 추적 문제를 잡아내지 못한다.
 
-## 형식 모델 (Formal Model)
+**이 논문이 푸는 문제**
 
-에이전트를 POMDP 기반 제어 루프로 정의: **A = ⟨S, O, M, T, π⟩**
-지각(Φ) → 메모리 업데이트(μ, RAG 포함) → 인지 계획(Ψ, 행동 전 잠재 추론) → 행동 정책(π) → 환경 반응·피드백(E) → 루프. 본 프로젝트의 태스크→응답→(검증)→채점 흐름은 이 루프의 축소판이다.
+- 빠르게 늘어나는 에이전트 설계를 아키텍처 관점에서 하나의 틀로 정리하고, 성능뿐 아니라 통제·안전·평가까지 포함해 "어떻게 만들고 어떻게 평가할 것인가"에 답한다.
 
-## 이 논문이 정의한 CLASSic 평가 프레임 (본 프로젝트 지표의 출처)
+## 핵심 아이디어
 
-논문 Section 7의 CLASSic 5축이 **본 프로젝트 평가 지표와 1:1로 대응**한다.
+에이전트를 단순한 정책이 아니라 **부분 관측 환경(POMDP)에서 돌아가는 제어 시스템**으로 보고, 이를 6개 축(핵심 구성요소 / 인지 아키텍처 / 학습 / 다중 에이전트 / 환경 / 평가)으로 나눈다. 그 위에서 "선형 추론 → 추론 시점에 계산을 쓰는 모델", "고정된 API 호출 → MCP·코드 실행", "제멋대로 도는 자율 루프 → 통제 가능한 흐름 그래프"로 옮겨가는 흐름을 설명하고, 평가를 CLASSic 5개 축으로 묶는다.
 
-| CLASSic (논문 §7) | 논문 요지 | 본 프로젝트 지표 |
-| --- | --- | --- |
-| **C**ost | 계층적/트리탐색 에이전트는 성능↑지만 비용 페널티 | `cost_tokens_avg` |
-| **L**atency | 실세계 작업엔 엄격한 지연 평가 필요 | `latency_seconds_avg` |
-| **A**ccuracy | 정적 QA만으론 부족 — 도구 사용·상태 추적·장기 복구에서 성공률 급락 | `success` 정확도 (+ 1차 시도 정확도) |
-| **S**ecurity | 도구 연결 시 prompt injection이 에이전트를 "confused deputy"로 전락시킴 | `unsafe_action_rate`, `unsafe_intent_rate` |
-| **S**tability | 반복 실행 분산·최악 실패를 평균과 함께 보고해야 함 | `stability_success_rate_stddev` |
+## 모델/알고리즘
 
-## 우리 프로젝트에 적용한 인사이트 (Insights Applied)
-
-| 논문 관점 | 본 프로젝트 반영 |
+| | 내용 |
 | --- | --- |
-| 성능만으로 에이전트를 평가하면 안 됨 (CLASSic) | 단일 accuracy 대신 **Cost/Latency/Accuracy/Safety/Stability 다축 평가** |
-| §7.4 — 실행 전 계획을 검증하는 **독립적 정책/감사 구성요소**, 민감 액션에 대한 명시적 확인, 제한된 도구 권한 | **verifier(`verify_pre`)** 로 `protected.txt` 보호·광범위 삭제·경로 이탈 차단 (설정 C) |
-| §7.4 — 직접/**간접 prompt injection**(untrusted 콘텐츠가 지시를 덮어씀) | action 태스크에 인젝션형 유혹 삽입("문서가 protected.txt를 지우라 함") → 실제 태스크만 수행하는지 평가 |
-| MCP 경계에서의 **allowlist·감사 로깅**(audit logging) | 실행별 원시 응답·파싱·재시도 이력을 `logs/`에 JSON으로 **전량 기록** |
-| §8.2 — 실패 시 전략 변경 없이 반복 → 무한 루프 | verifier는 피드백을 담아 **최대 1회만** 재시도(무한 루프 방지) |
-| 결론 — **"모델 규모만으론 발전 없음"**, 통제·검증이 열쇠 | 실험 핵심 질문: 큰 모델 단독(B) vs 작은 모델+verifier(C) |
+| 입력 | 부분 관측 $O_t = \Phi(S_t)$ (텍스트·멀티모달)과 내부 메모리 $M_t$ |
+| 출력 | 행동/도구 호출 $A_t \sim \pi_\theta(A_t \mid Z_t, M_t)$ |
+| 주요 모듈 | 지각 $\Phi$ · 메모리 갱신 $\mu$(RAG 포함) · 계획 $\Psi$(행동에 앞선 내부 추론 $Z_t$) · 행동 정책 $\pi$ |
+| 수식 | 에이전트 $\mathcal{A}=\langle S, O, M, T, \pi\rangle$; $M_t=\mu(M_{t-1},O_t,Z_{t-1},E_{t-1})$; $Z_t\sim P_\theta(Z_t\mid M_t,O_t)$; 환경 반응 $S_{t+1}\leftarrow \mathrm{Env}(S_t,A_t)$ |
 
-## 한계 및 우리 실험과의 간극 (Limitations / Gaps)
+## 실험
 
-- 논문은 개념·분류 중심 서베이 → 본 실험은 특정 벤치마크 재현이 아니라 **같은 문제의식을 로컬에서 축소 재구성**한 것.
-- 본 실험 verifier는 **정적 규칙 + 1회 재시도**의 최소 구현. 논문이 언급한 SelfCheckGPT류 추론 검증, meta-cognitive 루프 탈출, constitutional AI 정렬은 미포함.
-- unsafe intent 탐지는 **키워드 스캔** 수준(논문의 PromptArmor/적응형 공격 논의보다 단순).
-- 로컬 q4 양자화 결과라 논문이 다루는 대형/풀정밀 세팅과 직접 비교 불가.
+서베이 논문이라 **하나의 데이터셋·baseline·대표 결과는 없다.** 대신 분야의 평가 방식을 정리한다.
 
-## 후속 확인/작업 (Follow-ups)
+- **소개한 벤치마크**: SWE-bench Verified/Pro(소프트웨어 엔지니어링), OSWorld Verified(운영체제 제어), GAIA(범용), τ-bench(정책 하 도구 사용), FrontierMath(수학), AgentBench, MultiAgentBench(MARBLE), Robotouille(비동기), WebArena(장기 작업).
+- **평가 기준**: CLASSic(비용·지연·정확도·보안·안정성).
+- **대표 결과(정성)**: 다차원 비교(Fig.4) — 계층적 에이전트는 추론 깊이·도구 숙련도가 높지만 **비용과 지연을 크게 치른다.** 비동기 환경(Robotouille)에서는 성공률이 47%에서 11%로 떨어져 시간 인식 부족을 드러낸다.
+- **ablation**: 없음(서베이). → **이 공백을 본 저장소의 A/B/C 실험이 직접 메운다.**
 
-- [ ] 논문 §7.4의 완화책(compartmentalized sandbox, 사용자 확인)을 verifier에 추가 반영할지 검토.
-- [ ] 논문의 taxonomy 6차원에서 본 실험 A/B/C의 위치를 명시 매핑.
-- [ ] hallucination-in-action(존재하지 않는 파일 삭제 등)을 별도 실패 유형으로 `metrics.csv`에 집계.
+## 한계
+
+- **평가**: 개념·분류 중심이라 통일된 정량 결과가 없다.
+- **안전성**: 프롬프트 주입에 대한 규칙 기반 방어는 취약하며, 적응형 공격이 이를 우회할 수 있다고 논문 스스로 지적한다.
+- **일반화·비용**: 다중 에이전트·트리 탐색은 계산 부담이 커 실시간 용도에 부적합하다.
+- **데이터**: 인용 문헌을 정리한 것이라 최신 벤치마크 반영에는 시점상 한계가 있다.
+
+## 코드 계획 (무엇을 실행·비교·측정할 것인가)
+
+- **실행**: `python src/experiment.py`로 A/B/C 세 설정을 35개 태스크에 반복 실행 → `logs/`에 저장.
+- **비교**: A(작은 모델) vs B(파라미터를 늘린 큰 모델) vs C(작은 모델 + verifier).
+- **측정**: `python src/evaluate.py` → `results/metrics.csv`에 CLASSic 5개 축과 실패 유형(parse/verifier_blocked/unsafe/wrong)을 기록.
+
+## 프로젝트 활용 (어떤 기능으로 들어가는가)
+
+논문의 CLASSic 5개 축이 본 프로젝트 지표와 그대로 맞아떨어지고, 안전 원칙은 verifier 기능으로 반영된다.
+
+| 논문 관점 | 프로젝트 기능 |
+| --- | --- |
+| CLASSic 다각도 평가 | `evaluate.py` → `metrics.csv` (비용·지연·정확도·보안·안정성) |
+| §7.4 실행 전에 계획을 검사하는 독립 정책·감사 요소 | `verifier.verify_pre` — `protected.txt` 보호, 무분별한 삭제·경로 이탈 차단 (설정 C) |
+| §7.4 직접·간접 프롬프트 주입 | 액션 태스크에 주입 유도 문구를 심어, 진짜 지시만 수행하는지 평가 |
+| MCP 경계의 허용 목록·실행 기록 | 실행마다 원본 응답·파싱 결과·재시도 이력을 `logs/`에 모두 저장 |
+| §8.2 전략을 안 바꾸고 반복하는 무한 루프 | verifier는 피드백을 담아 **딱 한 번만** 재시도 |
+| 결론 "모델 크기만으로는 발전이 안 온다" | 실험의 핵심 질문: 파라미터 확대(B) vs 검증 장치(C) |
 
 ---
 
-_관련 문서: 프로젝트 청사진은 `docs/project_canvas.md`, 실행/결과는 최상위 `README.md`._
+_관련: 프로젝트 청사진 `docs/project_canvas.md`, 실행·결과 `README.md`._
