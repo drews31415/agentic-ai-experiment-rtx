@@ -92,31 +92,31 @@ ollama pull qwen2.5:14b-instruct-q4_K_M
 전체 실험 실행:
 
 ```powershell
-python run_experiment.py --ollama-url http://localhost:11434 --small-model qwen2.5:7b-instruct-q4_K_M --large-model qwen2.5:14b-instruct-q4_K_M
-python results/aggregate.py
+python src/baseline.py --ollama-url http://localhost:11434 --small-model qwen2.5:7b-instruct-q4_K_M --large-model qwen2.5:14b-instruct-q4_K_M
+python src/evaluate.py
 ```
 
 빠른 파이프라인 점검:
 
 ```powershell
-python run_experiment.py --quick
-python results/aggregate.py
+python src/baseline.py --quick
+python src/evaluate.py
 ```
 
 모델 호출 없이 러너/채점 파이프라인만 점검:
 
 ```powershell
-python run_experiment.py --quick --no-model
-python results/aggregate.py
+python src/baseline.py --quick --no-model
+python src/evaluate.py
 ```
 
 ## Repository 구조
 
 | 경로 | 역할 |
 | --- | --- |
-| `run_experiment.py` | 태스크 생성, 모델 호출, verifier, 액션 실행, 로그 저장 |
+| `src/baseline.py` | 태스크 생성, 모델 호출, verifier, 액션 실행, 로그 저장 |
 | `logs/` | 381개 실행 로그 |
-| `results/aggregate.py` | 로그 집계 스크립트 |
+| `src/evaluate.py` | 로그 집계 스크립트 |
 | `results/summary.json` | machine-readable 집계 결과 |
 | `results/experiment_report.md` | 표 형태의 결과 보고서 |
 | `runs/` | 액션 태스크별 임시 작업 디렉터리 |
