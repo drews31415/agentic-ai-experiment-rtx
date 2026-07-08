@@ -114,7 +114,8 @@ python src/evaluate.py
 
 | 경로 | 역할 |
 | --- | --- |
-| `src/baseline.py` | 태스크 생성, 모델 호출, verifier, 액션 실행, 로그 저장 |
+| `data/sample_cases.jsonl` | 35개 태스크 정의(calc/rag/file_qa/action), 실험 입력 소스 |
+| `src/baseline.py` | 태스크 로드, 모델 호출, verifier, 액션 실행, 로그 저장 |
 | `logs/` | 381개 실행 로그 |
 | `src/evaluate.py` | 로그 집계 스크립트 |
 | `results/summary.json` | machine-readable 집계 결과 |
