@@ -89,24 +89,31 @@ ollama pull qwen2.5:7b-instruct-q4_K_M
 ollama pull qwen2.5:14b-instruct-q4_K_M
 ```
 
-전체 실험 실행:
+전체 실험(A/B/C) 실행:
 
 ```powershell
-python src/baseline.py --ollama-url http://localhost:11434 --small-model qwen2.5:7b-instruct-q4_K_M --large-model qwen2.5:14b-instruct-q4_K_M
+python src/experiment.py --ollama-url http://localhost:11434 --small-model qwen2.5:7b-instruct-q4_K_M --large-model qwen2.5:14b-instruct-q4_K_M
+python src/evaluate.py
+```
+
+가장 단순한 baseline(설정 A)만 실행:
+
+```powershell
+python src/baseline.py
 python src/evaluate.py
 ```
 
 빠른 파이프라인 점검:
 
 ```powershell
-python src/baseline.py --quick
+python src/experiment.py --quick
 python src/evaluate.py
 ```
 
 모델 호출 없이 러너/채점 파이프라인만 점검:
 
 ```powershell
-python src/baseline.py --quick --no-model
+python src/experiment.py --quick --no-model
 python src/evaluate.py
 ```
 
@@ -115,7 +122,9 @@ python src/evaluate.py
 | 경로 | 역할 |
 | --- | --- |
 | `data/sample_cases.jsonl` | 35개 태스크 정의(calc/rag/file_qa/action), 실험 입력 소스 |
-| `src/baseline.py` | 태스크 로드, 모델 호출, verifier, 액션 실행, 로그 저장 |
+| `src/baseline.py` | 기본 에이전트(태스크 로드, 모델 호출, 액션 실행, 채점). A=작은 모델, B=큰 모델. 단독 실행 시 설정 A |
+| `src/verifier.py` | 검증 레이어. C = baseline + 실행 전 검증 + 재시도 |
+| `src/experiment.py` | 전체 A/B/C 러너, 실행별 로그 저장 |
 | `logs/` | 381개 실행 로그 |
 | `src/evaluate.py` | 로그 집계 스크립트 |
 | `results/summary.json` | machine-readable 집계 결과 |
