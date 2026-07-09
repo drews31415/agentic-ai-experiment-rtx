@@ -129,7 +129,11 @@ python src/evaluate.py
 | `src/evaluate.py` | 로그 집계 스크립트 |
 | `results/summary.json` | machine-readable 집계 결과 |
 | `results/experiment_report.md` | 표 형태의 결과 보고서 |
+| `results/metrics.csv` | 설정별 CLASSic 5축 + 실패 유형 분해 |
 | `runs/` | 액션 태스크별 임시 작업 디렉터리 |
+| `docs/paper_card.md` | 논문 요약 카드(문제·방법·수식·실험·한계) |
+| `docs/project_canvas.md` | 프로젝트 전환 캔버스(9항목) |
+| `docs/qna.md` | 예상 질문·답변, 실패 사례, 한계 |
 
 ## 한계
 
